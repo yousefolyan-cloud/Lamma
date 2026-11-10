@@ -1,0 +1,21 @@
+{
+  "name": "lamma",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "vitest run",
+    "test:domain": "vitest run packages",
+    "test:db": "vitest run tests/db",
+    "typecheck": "tsc -p packages/domain --noEmit && tsc -p tests --noEmit && npm run typecheck -w apps/mobile",
+    "worker:plan": "tsx backend/worker/run.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "pg": "^8.13.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
