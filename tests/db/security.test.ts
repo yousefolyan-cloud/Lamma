@@ -37,7 +37,7 @@ describe('tenant isolation (real end-user role, not service role)', () => {
     const recA = await weigh(db, driver.id, stopA.id, w.pet, 18);
     expect(await db.as(b.owner, `select * from public.weigh_versions`)).toHaveLength(0);
     expect(await db.as(b.owner, `select * from public.weigh_lines`)).toHaveLength(0);
-    await expectError(db.rpc(b.owner, 'sign_weights', [recA.version_id, recA.data_hash, null]), 'not_authorized');
+    await expectError(db.rpc(b.owner, 'sign_weights', [recA.version_id, recA.data_hash, null, 'ar']), 'not_authorized');
     // the institution sees its own stop, but not the finance ledger, other stops, or prices
     expect(await db.as(a.owner, `select * from public.weigh_lines`)).toHaveLength(1);
     for (const t of ['price_versions', 'route_prices', 'journal_lines', 'audit_events', 'area_policies', 'drivers', 'vehicles']) {
@@ -103,16 +103,16 @@ describe('weights and sign-off', () => {
     expect(dup).toMatchObject({ version_id: v1.version_id, duplicate: true });
     expect(await db.admin(`select 1 from public.weigh_versions`)).toHaveLength(1);
 
-    await expectError(db.rpc(driver.id, 'sign_weights', [v1.version_id, v1.data_hash, null]), 'not_authorized');
+    await expectError(db.rpc(driver.id, 'sign_weights', [v1.version_id, v1.data_hash, null, 'ar']), 'not_authorized');
     await expectError(db.rpc(driver.id, 'complete_stop', [s1.id]), 'signature_required');
-    await expectError(db.rpc(inst.owner, 'sign_weights', [v1.version_id, 'tampered-hash', null]), 'stale_version');
+    await expectError(db.rpc(inst.owner, 'sign_weights', [v1.version_id, 'tampered-hash', null, 'ar']), 'stale_version');
 
     // driver corrects the reading before signature: a reason is mandatory, v1 is kept as superseded
     await expectError(weigh(db, driver.id, s1.id, w.pet, 18.75), 'reason_required');
     const v2 = await weigh(db, driver.id, s1.id, w.pet, 18.75, 'قراءة خاطئة للميزان');
-    await expectError(db.rpc(inst.owner, 'sign_weights', [v1.version_id, v1.data_hash, null]), 'stale_version');
-    await db.rpc(inst.owner, 'sign_weights', [v2.version_id, v2.data_hash, null]);
-    await expectError(db.rpc(inst.owner, 'sign_weights', [v2.version_id, v2.data_hash, null]), 'already_signed');
+    await expectError(db.rpc(inst.owner, 'sign_weights', [v1.version_id, v1.data_hash, null, 'ar']), 'stale_version');
+    await db.rpc(inst.owner, 'sign_weights', [v2.version_id, v2.data_hash, null, 'ar']);
+    await expectError(db.rpc(inst.owner, 'sign_weights', [v2.version_id, v2.data_hash, null, 'ar']), 'already_signed');
 
     // changing weights AFTER signature invalidates it: stop cannot complete until v3 is signed
     const v3 = await weigh(db, driver.id, s1.id, w.pet, 19, 'إضافة كيس نُسي');
@@ -120,7 +120,7 @@ describe('weights and sign-off', () => {
     expect(await db.admin(`select version, status from public.weigh_versions order by version`)).toEqual([
       { version: 1, status: 'superseded' }, { version: 2, status: 'superseded' }, { version: 3, status: 'awaiting_signature' }]);
     expect(await db.admin(`select 1 from public.collection_signoffs`)).toHaveLength(1); // the old signature record is preserved
-    await db.rpc(inst.owner, 'sign_weights', [v3.version_id, v3.data_hash, null]);
+    await db.rpc(inst.owner, 'sign_weights', [v3.version_id, v3.data_hash, null, 'ar']);
     expect((await db.rpc<any>(driver.id, 'complete_stop', [s1.id])).next_stop_id).toBe(s2.id);
     // after completion the stop is closed for silent edits
     await expectError(weigh(db, driver.id, s1.id, w.pet, 30, 'x'), 'invalid_state');

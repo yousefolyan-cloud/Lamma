@@ -604,10 +604,13 @@ end $$;
 
 -- Sign-off by the establishment owner / registered delegate, on THEIR account, bound to the exact
 -- data version shown to them (hash). The driver can never sign for the institution.
-create or replace function public.sign_weights(p_version uuid, p_data_hash text, p_signature_path text default null)
+create or replace function public.sign_weights(p_version uuid, p_data_hash text, p_signature_path text default null, p_locale text default 'ar')
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_ver public.weigh_versions; v_org uuid; v_role text; v_id uuid;
-  c_statement constant text := 'أؤكد بصفتي صاحب المنشأة أو المفوّض المعتمد أن أوزان المواد المسلّمة المعروضة أمامي صحيحة.';
+  -- the exact wording shown to the signer in their language is stored with the signature
+  c_statement constant text := case when p_locale = 'en'
+    then 'As the owner or authorised delegate, I confirm that the weights of delivered materials shown to me are correct.'
+    else 'أؤكد بصفتي صاحب المنشأة أو المفوّض المعتمد أن أوزان المواد المسلّمة المعروضة أمامي صحيحة.' end;
 begin
   select * into v_ver from public.weigh_versions where id = p_version for update;
   if not found then perform app.fail('not_authorized'); end if;
@@ -621,7 +624,7 @@ begin
   if v_ver.status = 'signed' then perform app.fail('already_signed'); end if;
   if p_data_hash is distinct from v_ver.data_hash then perform app.fail('stale_version', 'signed data does not match the current version'); end if;
   insert into public.collection_signoffs(weigh_version_id, signer_user_id, signer_org_id, signer_role, statement_version, statement_text, data_hash, signature_path)
-  values (p_version, auth.uid(), v_org, v_role, 'signoff-v1', c_statement, v_ver.data_hash, p_signature_path) returning id into v_id;
+  values (p_version, auth.uid(), v_org, v_role, 'signoff-v1-' || case when p_locale = 'en' then 'en' else 'ar' end, c_statement, v_ver.data_hash, p_signature_path) returning id into v_id;
   update public.weigh_versions set status = 'signed' where id = p_version;
   perform app.audit('sign_weights', 'weigh_version', p_version);
   return v_id;
@@ -947,7 +950,7 @@ grant execute on function
   public.apply_to_route(uuid, uuid), public.withdraw_application(uuid), public.assign_route(uuid, boolean),
   public.start_route(uuid), public.arrive_stop(uuid),
   public.record_weights(uuid, uuid, timestamptz, jsonb, text, double precision, double precision, real),
-  public.sign_weights(uuid, text, text), public.complete_stop(uuid), public.report_stop_exception(uuid, text, text),
+  public.sign_weights(uuid, text, text, text), public.complete_stop(uuid), public.report_stop_exception(uuid, text, text),
   public.arrive_station(uuid), public.station_shipment(uuid),
   public.submit_station_receipt(uuid, uuid, jsonb, text), public.resolve_case(uuid, text, text),
   public.confirm_reviewed_receipt(uuid)

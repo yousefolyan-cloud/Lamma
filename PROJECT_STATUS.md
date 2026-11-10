@@ -1,20 +1,40 @@
-# لمّة | Lamma — PROJECT_STATUS (2026-11-10)
+# لمّة | Lamma — PROJECT_STATUS (2026-11-11)
 
-## Done and tested (23 tests passing: `PGPASSWORD=postgres npm test`, needs local Postgres 16 + PostGIS)
-- `supabase/migrations/0001_schema.sql` tables (grams, fils, UTC), `0002_security.sql` RLS default-deny + immutability triggers, `0003_functions.sql` business RPCs.
-- Full journey in SQL: pickup request → publish_route → apply_to_route (eligibility) → assign_route (atomic) → start_route → arrive_stop → record_weights → sign_weights (institution account, hash-bound) → complete_stop → shipment notice → arrive_station → submit_station_receipt (only path to `completed`) → reconciliation (resolve_case / confirm_reviewed_receipt) → balanced ledger.
-- `packages/domain`: units (fils/grams), state machine, planner (cheapest insertion + 2-opt, weight/volume/time constraints).
-- `backend/worker/plan.ts`: automatic planning/publication/assignment job (idempotent).
-- `tests/db/*`: run as real `authenticated` role with JWT sub (tests/db/shim.sql emulates Supabase auth).
+Legend: ✅ implemented and tested here · 🟡 implemented, not tested on a real device / real Supabase · ⛔ not built yet
 
-## Not started
-- `apps/mobile` (Expo + Expo Router + TypeScript, Arabic RTL default, one app for all roles: institution / driver / station / Lamma admin with role switcher).
-- Supabase project (apply migrations), auth (phone OTP / email), storage buckets + policies, push.
-- Reports/PDF, payouts & settlement, offline outbox, account deletion, admin UI for areas/materials, docs set (README, ARCHITECTURE, ROLE_PERMISSIONS, OWNER_ACTIONS, APP_STORE_RELEASE_CHECKLIST...).
+## ✅ Implemented and tested (commands run in this workspace)
+- `npm test` → 32 passing (9 domain, 23 database). Database tests run as the real `authenticated` role with a JWT `sub`.
+- Browser end-to-end `tests/e2e/journey.mjs` → "E2E OK": the real app (web build) driven as driver, 3 institution delegates, station clerk and admin, against the real SQL. 20 real screenshots in `docs/screenshots/`.
+- `tsc --noEmit` clean for domain, tests, backend and the app; `expo export -p web` builds.
+- Journey: pickup request → route published → driver sees the 8 card fields → apply (eligibility) → atomic assignment → start → arrive → weigh (gross/tare/net per material) → institution signs on its own account (bound to the data hash) → auto-advance → "shipment on the way" → arrive at station → station compares against SIGNED weights → "confirm receipt" completes the route (only path) → balanced ledger entries. Mismatch / rejection → review case, route stays open.
+- One app, role switcher from server-approved contexts, role UI re-mounted on switch. Arabic RTL default + English.
 
-## Next steps
-1. Scaffold `apps/mobile` with create-expo-app, supabase-js, i18n (ar/en), design tokens (dark green, warm light background).
-2. Screens over the existing RPCs: driver available routes (8 card fields) → apply → active route → weigh → wait for signature; institution request + sign weights; station inbound + receipt compare + confirm; admin reviews + cases.
-3. Local dev backend: PostgREST against the local DB to run the app on web and take real screenshots.
-4. Never invent figures; all thresholds/pay/tolerances come from admin config.
-Master prompt: `docs/master-prompt-ar.txt`.
+## 🟡 Implemented but not verified where it matters
+- Native iOS/Android build: not built (no Apple/EAS account here). Only the web build was run. SecureStore session storage, fonts and RTL on a real phone are untested.
+- Real Supabase project: migrations were only applied to local PostgreSQL 16 + PostGIS with `tests/db/shim.sql` standing in for `auth`. Local runs use `backend/dev/gateway.ts`, not PostgREST/GoTrue.
+- Planning worker: tested through the DB tests; no scheduler is deployed. Distances are great-circle ESTIMATES (flagged in the UI); no road-distance provider is wired.
+- Auth is email + password. Phone OTP needs an SMS provider that serves Jordan (owner decision).
+
+## ⛔ Not built yet (real gaps, not hidden)
+- Photos / file uploads (scale ticket, documents, drawn signature) and Storage policies; QR handover code.
+- Offline outbox and sync centre (server side is idempotent via client event ids; the app does not queue offline yet).
+- Monthly reports and Arabic PDF, certificates, auditor role screens, recycling evidence chain, impact/credits module.
+- Payouts and settlements (ledger records sale + driver payable only), accounting export.
+- Admin screens for areas, materials, thresholds, pay policy, prices; station price/material screens (RPCs exist: `admin_set_threshold`, `admin_set_area_policy`, `station_set_material`, `station_set_price`).
+- Driver screens to add vehicle / documents / scale (RPCs exist), staff & branch management, support tickets, push notifications, background location, account deletion & data export, MFA.
+- Route cancellation / re-assignment / driver withdrawal after assignment, recurring pickups, corrections after a stop is completed.
+- App Store assets, privacy manifest review, legal drafts, cost table, CI, remaining docs (ARCHITECTURE, ROLE_PERMISSIONS, DATA_MODEL, API_SPEC, BUSINESS_RULES, SECURITY_AND_PRIVACY, OPERATIONS_RUNBOOK, APP_STORE_RELEASE_CHECKLIST).
+
+## Decisions and assumptions
+- Demo numbers in `backend/dev/seed.ts` (thresholds, pay 10 + 1/stop JOD, prices, density) are fictional fixtures. Nothing is hard-coded in the product: missing policy blocks publication.
+- No approved weight tolerance → tolerance is zero and any difference goes to review.
+- Assignment rule `assignment-v1`: fewest routes in the last 30 days, then earliest application.
+- Bundle id `com.lamma.app` is a placeholder until the owner confirms it.
+- Expo SDK 58 / React Native 0.88 / Expo Router 58 (versions from `expo/bundledNativeModules.json`).
+
+## Next steps (in order)
+1. Owner: Supabase project + GitHub repo (see docs/OWNER_ACTIONS.md). Apply migrations, run the DB tests against it, bootstrap the admin.
+2. Admin + station configuration screens, driver onboarding screens (vehicle, documents, scale) with file upload.
+3. Offline outbox for the driver round; photos; QR handover.
+4. Reports/PDF, payouts and settlements, account deletion.
+5. EAS development build on a real iPhone, then store preparation.

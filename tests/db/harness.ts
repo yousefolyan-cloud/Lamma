@@ -16,6 +16,7 @@ export async function createDb() {
   const boot = new Pool({ ...base, database: 'postgres', max: 1 });
   await boot.query(`create database ${name}`);
   const pool = new Pool({ ...base, database: name, max: 8 });
+  pool.on('error', () => {}); boot.on('error', () => {});
   await pool.query(readFileSync(join(root, 'tests/db/shim.sql'), 'utf8'));
   const dir = join(root, 'supabase/migrations');
   for (const f of readdirSync(dir).sort()) await pool.query(readFileSync(join(dir, f), 'utf8'));
@@ -138,7 +139,7 @@ export async function collectStop(db: Db, w: World, driver: string, stop: { id: 
   await db.rpc(driver, 'arrive_stop', [stop.id]);
   const rec = await db.rpc<{ version_id: string; data_hash: string }>(driver, 'record_weights',
     [stop.id, randomUUID(), new Date().toISOString(), JSON.stringify([{ material_id: material ?? w.pet, method: 'gross_tare', gross_g: kg(netKg) + 400, tare_g: 400, net_g: kg(netKg) }]), null, null, null, null]);
-  await db.rpc(inst.owner, 'sign_weights', [rec.version_id, rec.data_hash, null]);
+  await db.rpc(inst.owner, 'sign_weights', [rec.version_id, rec.data_hash, null, 'ar']);
   return db.rpc<{ route_status: string; next_stop_id: string | null; next_is_station: boolean }>(driver, 'complete_stop', [stop.id]);
 }
 
