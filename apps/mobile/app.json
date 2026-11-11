@@ -44,7 +44,10 @@
       ]
     ],
     "extra": {
-      "supportsRTL": true
+      "supportsRTL": true,
+      "eas": {
+        "projectId": "9c578b40-5645-4c20-9b05-cc18c53b2f1c"
+      }
     },
     "owner": "ey7lns-team"
   }
