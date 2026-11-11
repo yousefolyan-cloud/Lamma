@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/lib/session';
@@ -25,6 +25,7 @@ export default function SignIn() {
   };
   return (
     <Screen title={t.app.name} subtitle={t.app.tagline}>
+      <Image source={require('../../assets/lamma-logo.png')} accessibilityLabel={t.app.name} resizeMode="contain" style={{ width: 132, height: 132, alignSelf: 'center', marginVertical: space.sm }} />
       <Card>
         <T v="heading">{mode === 'in' ? t.auth.signIn : t.auth.signUp}</T>
         {mode === 'up' ? <Field label={t.auth.fullName} value={name} onChangeText={setName} autoComplete="name" /> : null}

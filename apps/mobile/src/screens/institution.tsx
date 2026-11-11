@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Empty, ErrorBox, Loading, Row, Screen, T, TabBar } from '@/ui';
 import { AccountPanel } from './account';
+import { color } from '@/theme';
 import { routeTone, useFmt, Value } from '@/format';
 
 type Tab = 'home' | 'history' | 'account';
@@ -31,7 +32,7 @@ export function InstitutionHome({ ctx }: { ctx: Extract<ActiveContext, { kind: '
         {tab === 'home' ? (
           <>
             {pending.data?.length ? (
-              <Card style={{ borderColor: '#E08A1E', borderWidth: 2 }}>
+              <Card style={{ borderColor: color.accent, borderWidth: 2 }}>
                 <T v="heading">{t.inst.sign}</T>
                 {pending.data.map((p) => (
                   <View key={p.version_id} style={{ gap: 4 }}>

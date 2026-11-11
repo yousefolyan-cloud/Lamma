@@ -22,12 +22,17 @@ export function Screen({ title, subtitle, back, right, children, footer }: { tit
       <View style={[s.header, { paddingTop: insets.top + space.md }]}>
         <View style={{ flex: 1 }}>
           {back ? (
-            <Pressable accessibilityRole="button" accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} style={{ marginBottom: space.xs }}>
-              <T v="label" tone="onPrimary" style={{ opacity: 0.85 }}>{t.common.back}</T>
+            <Pressable accessibilityRole="button" accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} style={s.back}>
+              <T v="label" style={{ color: color.primary }}>{t.common.back}</T>
             </Pressable>
           ) : null}
-          <T v="title" tone="onPrimary" accessibilityRole="header">{title}</T>
-          {subtitle ? <T v="small" tone="onPrimary" style={{ opacity: 0.85 }}>{subtitle}</T> : null}
+          <T v="title" accessibilityRole="header">{title}</T>
+          {subtitle ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color.primaryBright }} />
+              <T v="label" style={{ color: color.primary }}>{subtitle}</T>
+            </View>
+          ) : null}
         </View>
         {right}
       </View>
@@ -45,7 +50,7 @@ export function Button({ label, onPress, variant = 'primary', big, busy, disable
   const fg = variant === 'primary' || variant === 'danger' ? color.onPrimary : color.primary;
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!off, busy: !!busy }} disabled={off} onPress={onPress}
-      style={({ pressed }) => [s.button, { backgroundColor: bg, minHeight: big ? touch.driver : touch.min, opacity: off ? 0.5 : pressed ? 0.85 : 1 }, variant === 'ghost' && { borderWidth: 1, borderColor: color.border }]}>
+      style={({ pressed }) => [s.button, { backgroundColor: bg, minHeight: big ? touch.driver : touch.min, opacity: off ? 0.5 : pressed ? 0.85 : 1 }, variant === 'ghost' && { borderWidth: 1.5, borderColor: color.primary }]}>
       {busy ? <ActivityIndicator color={fg} /> : <Text style={[big ? type.heading : type.label, { color: fg, textAlign: 'center' }]}>{label}</Text>}
     </Pressable>
   );
@@ -66,7 +71,7 @@ export function Field({ label, hint, ...p }: TextInputProps & { label: string; h
 const tones = { neutral: [color.surfaceAlt, color.textMuted], success: [color.successSoft, color.success], warning: [color.warningSoft, color.warning], danger: [color.dangerSoft, color.danger], info: [color.infoSoft, color.info] } as const;
 export type Tone = keyof typeof tones;
 export const Badge = ({ label, tone = 'neutral' }: { label: string; tone?: Tone }) => (
-  <View style={{ backgroundColor: tones[tone][0], paddingHorizontal: space.md, paddingVertical: 2, borderRadius: radius.pill, alignSelf: 'flex-start' }}>
+  <View style={{ backgroundColor: tones[tone][0], paddingHorizontal: space.md, paddingVertical: 3, borderRadius: radius.pill, alignSelf: 'flex-start' }}>
     <Text style={[type.small, { color: tones[tone][1], fontFamily: type.label.fontFamily }]}>{label}</Text>
   </View>
 );
@@ -113,8 +118,9 @@ export function TabBar<K extends string>({ tabs, value, onChange }: { tabs: { ke
         const on = tab.key === value;
         return (
           <Pressable key={tab.key} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(tab.key)} style={s.tab}>
-            <View style={{ height: 3, width: 28, borderRadius: 2, backgroundColor: on ? color.accent : 'transparent', marginBottom: space.xs }} />
-            <Text style={[type.label, { color: on ? color.primary : color.textMuted, fontFamily: on ? type.heading.fontFamily : type.label.fontFamily }]}>{tab.label}{tab.badge ? `  (${tab.badge})` : ''}</Text>
+                        <View style={{ backgroundColor: on ? color.primarySoft : 'transparent', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs }}>
+              <Text style={[type.label, { color: on ? color.primary : color.textMuted, fontFamily: on ? type.heading.fontFamily : type.label.fontFamily }]}>{tab.label}{tab.badge ? `  (${tab.badge})` : ''}</Text>
+            </View>
           </Pressable>
         );
       })}
@@ -123,9 +129,10 @@ export function TabBar<K extends string>({ tabs, value, onChange }: { tabs: { ke
 }
 
 const s = StyleSheet.create({
-  header: { backgroundColor: color.primary, paddingHorizontal: space.lg, paddingBottom: space.lg, flexDirection: 'row', alignItems: 'flex-end', gap: space.md, borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg },
-  card: { backgroundColor: color.surface, borderRadius: radius.md, padding: space.lg, gap: space.sm, borderWidth: 1, borderColor: color.border, ...shadow.card },
-  button: { borderRadius: radius.md, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
+  header: { backgroundColor: color.surface, paddingHorizontal: space.lg, paddingBottom: space.md, flexDirection: 'row', alignItems: 'flex-end', gap: space.md, borderBottomWidth: 1, borderColor: color.border },
+  back: { alignSelf: 'flex-start', backgroundColor: color.primarySoft, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 2, marginBottom: space.sm },
+  card: { backgroundColor: color.surface, borderRadius: radius.lg, padding: space.lg, gap: space.sm, borderWidth: 1, borderColor: color.border, ...shadow.card },
+  button: { borderRadius: radius.pill, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
   input: { backgroundColor: color.surface, borderWidth: 1.5, borderColor: color.border, borderRadius: radius.md, paddingHorizontal: space.md, minHeight: touch.min, color: color.text },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.md, paddingVertical: 2 },
   tabbar: { flexDirection: 'row', backgroundColor: color.surface, borderTopWidth: 1, borderColor: color.border },

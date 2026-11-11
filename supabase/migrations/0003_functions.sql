@@ -931,9 +931,11 @@ do $$ declare f record; begin
   for f in select p.oid::regprocedure as sig from pg_proc p
            where p.pronamespace in ('public'::regnamespace, 'app'::regnamespace)
              and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e') loop
-    execute format('revoke execute on function %s from public, anon', f.sig);
+    -- Supabase default privileges also grant EXECUTE on new public functions to authenticated: start from zero
+    execute format('revoke execute on function %s from public, anon, authenticated', f.sig);
   end loop;
 end $$;
+grant usage on schema app to service_role;
 grant execute on function app.is_lamma(text[]), app.is_member(uuid, text[]), app.is_approved_driver(),
   app.is_assigned_driver(uuid), app.is_station_member(uuid, text[]), app.can_see_route(uuid),
   app.can_see_stop(uuid), app.driver_sees_branch(uuid), app.is_service() to authenticated;
@@ -957,3 +959,4 @@ grant execute on function
   to authenticated;
 grant execute on function public.planning_candidates(uuid), public.publish_route(jsonb),
   public.assign_route(uuid, boolean), public.assign_due_routes() to service_role;
+grant execute on function app.is_service(), app.is_lamma(text[]) to service_role;

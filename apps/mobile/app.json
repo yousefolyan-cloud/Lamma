@@ -15,7 +15,7 @@
     "android": {
       "package": "com.lamma.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0F4D3A",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
