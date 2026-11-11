@@ -5,8 +5,8 @@
 const palettes = {
   // A — Canva board: fresh green on white with mint surfaces and an amber accent
   fresh: {
-    bg: '#F3F5F4', surface: '#FFFFFF', surfaceAlt: '#E3F8EC', border: '#E7ECEA',
-    primary: '#08944A', primaryDark: '#06783C', primaryBright: '#2FD27C', primarySoft: '#E3F8EC', onPrimary: '#FFFFFF',
+    bg: '#FBFCFB', surface: '#FFFFFF', surfaceAlt: '#E3F8EC', border: '#EDF1EF',
+    primary: '#07843F', primaryDark: '#056A32', primaryBright: '#2FD27C', primarySoft: '#E3F8EC', onPrimary: '#FFFFFF',
     accent: '#F2A225', accentSoft: '#FEF3DC',
     text: '#12261C', textMuted: '#55665D', textFaint: '#8C9A93',
   },

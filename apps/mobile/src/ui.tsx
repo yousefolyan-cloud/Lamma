@@ -185,7 +185,7 @@ const s = StyleSheet.create({
   back: { alignSelf: 'flex-start', backgroundColor: color.surface, borderRadius: radius.pill, width: 38, height: 38, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
   card: { backgroundColor: color.surface, borderRadius: radius.lg, padding: space.lg, gap: space.sm, ...shadow.card },
   button: { borderRadius: radius.pill, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
-  input: { backgroundColor: color.bg, borderWidth: 1.5, borderColor: color.bg, borderRadius: radius.md, paddingHorizontal: space.md, minHeight: touch.min, color: color.text },
+  input: { backgroundColor: '#F4F6F5', borderWidth: 1.5, borderColor: '#F4F6F5', borderRadius: radius.md, paddingHorizontal: space.md, minHeight: touch.min, color: color.text },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.md, paddingVertical: 2 },
   tabbar: { flexDirection: 'row', backgroundColor: color.surface, paddingTop: space.sm, ...shadow.bar },
   tab: { flex: 1, alignItems: 'center', minHeight: touch.min, justifyContent: 'center', gap: 2 },
