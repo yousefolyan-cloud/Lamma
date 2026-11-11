@@ -1,5 +1,9 @@
 name: Publish preview update (Expo Go)
 
+on:
+  push:
+    branches: ['main']
+
 jobs:
   publish_preview:
     name: Publish update to preview branch
