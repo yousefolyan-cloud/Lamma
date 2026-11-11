@@ -80,7 +80,7 @@ returns void language sql security definer set search_path = '' as $$
 $$;
 
 -- ---------- immutability of evidence ----------
-create or replace function app.forbid_change() returns trigger language plpgsql as $$
+create or replace function app.forbid_change() returns trigger language plpgsql set search_path = '' as $$
 begin
   raise exception 'immutable_record: % on % is not allowed', tg_op, tg_table_name using errcode = 'P0001';
 end $$;
@@ -93,7 +93,7 @@ create trigger journal_lines_immutable before update or delete on public.journal
 create trigger audit_immutable before update or delete on public.audit_events for each row execute function app.forbid_change();
 
 -- weigh version header: only the status may change, and only forward
-create or replace function app.weigh_version_guard() returns trigger language plpgsql as $$
+create or replace function app.weigh_version_guard() returns trigger language plpgsql set search_path = '' as $$
 begin
   if tg_op = 'DELETE' then raise exception 'immutable_record: weigh_versions cannot be deleted'; end if;
   if (to_jsonb(new) - 'status') <> (to_jsonb(old) - 'status') then
@@ -108,7 +108,7 @@ end $$;
 create trigger weigh_versions_guard before update or delete on public.weigh_versions for each row execute function app.weigh_version_guard();
 
 -- every journal entry must balance (checked at commit)
-create or replace function app.journal_balanced() returns trigger language plpgsql as $$
+create or replace function app.journal_balanced() returns trigger language plpgsql set search_path = '' as $$
 declare d bigint; c bigint;
 begin
   select coalesce(sum(debit_fils),0), coalesce(sum(credit_fils),0) into d, c

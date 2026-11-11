@@ -2,7 +2,7 @@
 -- Error messages start with a stable code (before ':') that the app translates.
 
 create or replace function app.fail(p_code text, p_detail text default '') returns void
-language plpgsql as $$ begin raise exception '%: %', p_code, p_detail using errcode = 'P0001'; end $$;
+language plpgsql set search_path = '' as $$ begin raise exception '%: %', p_code, p_detail using errcode = 'P0001'; end $$;
 
 create or replace function app.notify(p_org uuid, p_user uuid, p_kind text, p_payload jsonb, p_key text)
 returns void language sql security definer set search_path = '' as $$

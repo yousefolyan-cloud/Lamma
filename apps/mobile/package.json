@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/almarai": "^0.4.1",
     "@expo-google-fonts/cairo": "^0.4.2",
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
     "@expo-google-fonts/playpen-sans-arabic": "^0.4.1",
+    "@expo-google-fonts/readex-pro": "^0.4.1",
+    "@expo-google-fonts/tajawal": "^0.4.1",
     "@expo/metro-runtime": "~58.0.17",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@supabase/supabase-js": "^2.119.0",
