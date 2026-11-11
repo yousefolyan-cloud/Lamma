@@ -5,9 +5,10 @@ import { api, type ReviewQueue } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Empty, ErrorBox, Field, Loading, Row, Screen, T, TabBar } from '@/ui';
 import { AccountPanel } from './account';
+import { AdminSettings } from './settings';
 import { routeTone, useFmt, Value } from '@/format';
 
-type Tab = 'ops' | 'reviews' | 'account';
+type Tab = 'ops' | 'reviews' | 'settings' | 'account';
 export function AdminHome() {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('ops');
@@ -15,10 +16,10 @@ export function AdminHome() {
   const count = queue.data ? Object.values(queue.data).reduce((a, l) => a + l.length, 0) : 0;
   return (
     <View style={{ flex: 1 }}>
-      <Screen title={tab === 'ops' ? t.admin.overview : tab === 'reviews' ? t.admin.reviews : t.tabs.account} subtitle={t.ctx.lamma}>
-        {tab === 'ops' ? <Ops /> : tab === 'reviews' ? <Reviews queue={queue} /> : <AccountPanel />}
+      <Screen title={tab === 'ops' ? t.admin.overview : tab === 'reviews' ? t.admin.reviews : tab === 'settings' ? t.tabs.settings : t.tabs.account} subtitle={t.ctx.lamma}>
+        {tab === 'ops' ? <Ops /> : tab === 'reviews' ? <Reviews queue={queue} /> : tab === 'settings' ? <AdminSettings /> : <AccountPanel />}
       </Screen>
-      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'ops', label: t.tabs.ops }, { key: 'reviews', label: t.tabs.reviews, badge: count }, { key: 'account', label: t.tabs.account }]} />
+      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'ops', label: t.tabs.ops }, { key: 'reviews', label: t.tabs.reviews, badge: count }, { key: 'settings', label: t.tabs.settings }, { key: 'account', label: t.tabs.account }]} />
     </View>
   );
 }

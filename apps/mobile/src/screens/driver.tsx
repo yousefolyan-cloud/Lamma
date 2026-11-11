@@ -6,9 +6,10 @@ import { api, type RouteCard } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Choice, Empty, ErrorBox, Loading, Row, Screen, T, TabBar, type Tone } from '@/ui';
 import { AccountPanel } from './account';
+import { DriverEquipment } from './settings';
 import { routeTone, useFmt, Value } from '@/format';
 
-type Tab = 'routes' | 'active' | 'account';
+type Tab = 'routes' | 'active' | 'equipment' | 'account';
 const appTone = (s: string): Tone => (s === 'selected' ? 'success' : s === 'ineligible' || s === 'not_selected' ? 'danger' : 'warning');
 
 export function DriverHome() {
@@ -18,10 +19,10 @@ export function DriverHome() {
   const live = (mine.data ?? []).filter((r) => r.active);
   return (
     <View style={{ flex: 1 }}>
-      <Screen title={tab === 'routes' ? t.driver.available : tab === 'active' ? t.driver.myRoute : t.tabs.account} subtitle={t.ctx.driver}>
-        {tab === 'routes' ? <AvailableRoutes /> : tab === 'active' ? <MyRoutes mine={mine} /> : <AccountPanel />}
+      <Screen title={tab === 'routes' ? t.driver.available : tab === 'active' ? t.driver.myRoute : tab === 'equipment' ? t.tabs.equipment : t.tabs.account} subtitle={t.ctx.driver}>
+        {tab === 'routes' ? <AvailableRoutes /> : tab === 'active' ? <MyRoutes mine={mine} /> : tab === 'equipment' ? <DriverEquipment /> : <AccountPanel />}
       </Screen>
-      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'routes', label: t.tabs.routes }, { key: 'active', label: t.tabs.active, badge: live.length }, { key: 'account', label: t.tabs.account }]} />
+      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'routes', label: t.tabs.routes }, { key: 'active', label: t.tabs.active, badge: live.length }, { key: 'equipment', label: t.tabs.equipment }, { key: 'account', label: t.tabs.account }]} />
     </View>
   );
 }

@@ -7,9 +7,10 @@ import { api } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Empty, ErrorBox, Loading, Row, Screen, T, TabBar } from '@/ui';
 import { AccountPanel } from './account';
+import { StationPrices } from './settings';
 import { routeTone, useFmt, Value } from '@/format';
 
-type Tab = 'inbound' | 'account';
+type Tab = 'inbound' | 'prices' | 'account';
 export function StationHome({ ctx }: { ctx: Extract<ActiveContext, { kind: 'station' }> }) {
   const { t, lookup, time } = useI18n();
   const fmt = useFmt();
@@ -21,7 +22,7 @@ export function StationHome({ ctx }: { ctx: Extract<ActiveContext, { kind: 'stat
   return (
     <View style={{ flex: 1 }}>
       <Screen title={ctx.orgName} subtitle={t.ctx.station}>
-        {tab === 'account' ? <AccountPanel /> : routes.loading ? <Loading /> : routes.error ? <ErrorBox error={routes.error} onRetry={routes.reload} /> : !routes.data?.length ? <Empty text={t.station.none} /> : (
+        {tab === 'account' ? <AccountPanel /> : tab === 'prices' ? <StationPrices stationId={ctx.stationId} role={ctx.role} /> : routes.loading ? <Loading /> : routes.error ? <ErrorBox error={routes.error} onRetry={routes.reload} /> : !routes.data?.length ? <Empty text={t.station.none} /> : (
           <>
             <ErrorBox error={act.error} />
             {routes.data.map((r) => (
@@ -48,7 +49,7 @@ export function StationHome({ ctx }: { ctx: Extract<ActiveContext, { kind: 'stat
           </>
         )}
       </Screen>
-      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'inbound', label: t.tabs.inbound, badge: live.length }, { key: 'account', label: t.tabs.account }]} />
+      <TabBar value={tab} onChange={setTab} tabs={[{ key: 'inbound', label: t.tabs.inbound, badge: live.length }, { key: 'prices', label: t.tabs.prices }, { key: 'account', label: t.tabs.account }]} />
     </View>
   );
 }

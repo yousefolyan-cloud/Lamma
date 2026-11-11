@@ -20,8 +20,16 @@ async function table<T>(name: string, build?: (q: any) => any): Promise<T[]> {
 
 export interface Membership { org_id: string; org_name: string; kind: 'institution' | 'station' | 'lamma'; role: string; org_status: string; membership_status: string; status_reason: string | null; station_id: string | null }
 export interface Contexts { profile: { full_name: string; locale: 'ar' | 'en' } | null; memberships: Membership[]; driver: { status: string; status_reason: string | null } | null }
-export interface Material { id: string; code: string; name_ar: string; name_en: string; active: boolean }
-export interface Area { id: string; name_ar: string; name_en: string; active: boolean }
+export interface Material { id: string; code: string; name_ar: string; name_en: string; active: boolean; bulk_density_g_per_l: number | null; density_source: string | null }
+export interface Area { id: string; code: string; name_ar: string; name_en: string; city: string; active: boolean }
+export interface Threshold { service_area_id: string; material_id: string; min_g: number }
+export const POLICY_KEYS = ['base_pay_fils', 'per_stop_pay_fils', 'per_km_pay_fils', 'application_window_min', 'early_start_min', 'service_min_per_stop', 'unload_min', 'max_route_min', 'max_stops', 'plan_capacity_g', 'plan_capacity_l', 'tolerance_g', 'tolerance_bps'] as const;
+export type PolicyKey = (typeof POLICY_KEYS)[number];
+export type AreaPolicy = { service_area_id: string; auto_publish: boolean } & Record<PolicyKey, number | string | null>;
+export interface DriverDocument { id: string; kind: string; expires_on: string | null; status: string }
+export interface DriverScale { id: string; identifier: string; scale_type: string | null; capacity_g: number; precision_g: number; check_valid_until: string | null; status: string }
+export interface StationMaterial { station_id: string; material_id: string; accepted: boolean; conditions: string | null }
+export interface PriceVersion { id: string; station_id: string; material_id: string; price_fils_per_kg: string; valid_from: string; valid_to: string | null }
 export interface RouteCard { route_id: string; code: string; est_total_g: number; required_capacity_g: number; required_capacity_l: number | null; stops_count: number; station_name: string; starts_at: string; distance_m: number; distance_is_estimate: boolean; area_name_ar: string; area_name_en: string; expected_duration_min: number; pay_fils: string; my_application_status: string | null; my_application_reasons: string[] | null }
 export interface MyRoute { route_id: string; code: string; status: string; starts_at: string; expected_duration_min: number; distance_m: number; pay_fils: string; est_total_g: number; station_name: string; station_address: string | null; station_lat: number | null; station_lng: number | null; active: boolean; receipt: { status: string; signed_total_g: number; station_net_g: number; diff_g: number } | null }
 export interface DriverStop { stop_id: string; seq: number; status: 'pending' | 'arrived' | 'collected' | 'exception'; exception_kind: string | null; branch_name: string; org_name: string; address: string | null; entrance_notes: string | null; contact_name: string | null; contact_phone: string | null; lat: number | null; lng: number | null; expected: { material_id: string; est_g: number | null; containers: number | null }[] | null; weigh: { version_id: string; version: number; status: 'awaiting_signature' | 'signed'; lines: { material_id: string; net_g: number }[] } | null }
@@ -80,5 +88,33 @@ export const api = {
   review: (entity: string, id: string, decision: 'approved' | 'rejected', reason: string | null) => rpc<null>('admin_review', { p_entity: entity, p_id: id, p_decision: decision, p_reason: reason }),
   overview: () => rpc<Overview>('admin_overview'),
   resolveCase: (id: string, outcome: 'accept_receipt' | 'reweigh', note: string) => rpc<null>('resolve_case', { p_case: id, p_outcome: outcome, p_note: note }),
+  // configuration (lamma operations)
+  allAreas: () => table<Area>('service_areas', (q) => q.order('code')),
+  allMaterials: () => table<Material>('material_types', (q) => q.order('code')),
+  upsertArea: (a: { id: string | null; code: string; name_ar: string; name_en: string; city: string; active: boolean }) =>
+    rpc<string>('admin_upsert_area', { p_id: a.id, p_code: a.code, p_name_ar: a.name_ar, p_name_en: a.name_en, p_city: a.city, p_active: a.active }),
+  upsertMaterial: (m: { id: string | null; code: string; name_ar: string; name_en: string; density: number | null; source: string | null; active: boolean }) =>
+    rpc<string>('admin_upsert_material', { p_id: m.id, p_code: m.code, p_name_ar: m.name_ar, p_name_en: m.name_en, p_density_g_per_l: m.density, p_density_source: m.source, p_active: m.active }),
+  thresholds: (area: string) => table<Threshold>('collection_thresholds', (q) => q.eq('service_area_id', area)),
+  setThreshold: (area: string, material: string, minG: number) => rpc<null>('admin_set_threshold', { p_area: area, p_material: material, p_min_g: minG }),
+  areaPolicy: (area: string) => table<AreaPolicy>('area_policies', (q) => q.eq('service_area_id', area)),
+  setAreaPolicy: (area: string, policy: Record<string, unknown>) => rpc<null>('admin_set_area_policy', { p_area: area, p_policy: policy }),
+  requiredDocuments: () => table<{ kind: string }>('required_driver_documents', (q) => q.order('kind')),
+  setRequiredDocument: (kind: string, required: boolean) => rpc<null>('admin_set_required_document', { p_kind: kind, p_required: required }),
+  // driver equipment
+  addVehicle: (v: { type: string; plate: string; capacityG: number; capacityL: number }) =>
+    rpc<string>('add_vehicle', { p_type: v.type, p_plate: v.plate, p_capacity_g: v.capacityG, p_capacity_l: v.capacityL }),
+  driverDocuments: () => table<DriverDocument>('driver_documents', (q) => q.order('created_at')),
+  addDriverDocument: (kind: string, expires: string | null) => rpc<string>('add_driver_document', { p_kind: kind, p_file_path: null, p_expires_on: expires }),
+  driverScales: () => table<DriverScale>('driver_scales', (q) => q.order('created_at')),
+  addDriverScale: (sc: { identifier: string; type: string | null; capacityG: number; precisionG: number; validUntil: string | null }) =>
+    rpc<string>('add_driver_scale', { p_identifier: sc.identifier, p_type: sc.type, p_capacity_g: sc.capacityG, p_precision_g: sc.precisionG, p_check_valid_until: sc.validUntil, p_evidence_path: null }),
+  // station materials and prices
+  stationMaterials: (station: string) => table<StationMaterial>('station_materials', (q) => q.eq('station_id', station)),
+  setStationMaterial: (station: string, material: string, accepted: boolean, conditions: string | null) =>
+    rpc<null>('station_set_material', { p_station: station, p_material: material, p_accepted: accepted, p_conditions: conditions }),
+  stationPrices: (station: string) => table<PriceVersion>('price_versions', (q) => q.eq('station_id', station).is('valid_to', null)),
+  setStationPrice: (station: string, material: string, filsPerKg: number) =>
+    rpc<string>('station_set_price', { p_station: station, p_material: material, p_price_fils_per_kg: filsPerKg }),
   assignRoute: (route: string) => rpc<string | null>('assign_route', { p_route: route, p_ignore_window: true }),
 };
