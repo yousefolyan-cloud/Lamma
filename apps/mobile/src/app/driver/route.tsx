@@ -7,7 +7,9 @@ import { useSession } from '@/lib/session';
 import { useI18n } from '@/i18n';
 import { api, type DriverStop, type Material, type WeighLineInput } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
-import { Badge, Banner, Button, Card, Choice, ErrorBox, Field, Loading, Row, Screen, T } from '@/ui';
+import { Badge, Banner, Button, Card, Choice, ErrorBox, Field, IconButton, Loading, Row, Screen, T } from '@/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { color } from '@/theme';
 import { routeTone, useFmt, Value } from '@/format';
 
 const openMaps = (lat: number | null, lng: number | null) => { if (lat != null && lng != null) Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`).catch(() => {}); };
@@ -87,8 +89,15 @@ function StopPanel({ stop, total, materials, busy, doIt }: { stop: DriverStop; t
 
   return (
     <Card>
-      <T v="label" muted>{t.driver.stopOf} {stop.seq} / {total}</T>
-      <T v="heading">{stop.org_name}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: color.primarySoft, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="business" size={24} color={color.primary} /></View>
+        <View style={{ flex: 1 }}>
+          <T v="small" muted>{t.driver.stopOf} {stop.seq} / {total}</T>
+          <T v="heading">{stop.org_name}</T>
+        </View>
+        {stop.contact_phone ? <IconButton icon="call-outline" label={stop.contact_phone} onPress={() => Linking.openURL(`tel:${stop.contact_phone}`).catch(() => {})} /> : null}
+        {stop.lat != null ? <IconButton icon="navigate-outline" label={t.driver.navigate} onPress={() => openMaps(stop.lat, stop.lng)} /> : null}
+      </View>
       <T>{stop.branch_name}{stop.address ? ` · ${stop.address}` : ''}</T>
       {stop.entrance_notes ? <T v="small" muted>{t.driver.entrance}: {stop.entrance_notes}</T> : null}
       {stop.expected?.length ? <T v="small" muted>{t.driver.expected}: {stop.expected.map((e) => `${matName(e.material_id)} ${e.est_g != null ? fmt.kg(e.est_g) : ''}`).join(' · ')} ({t.common.estimate})</T> : null}

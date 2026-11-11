@@ -5,13 +5,15 @@ import type { ActiveContext } from '@/lib/session';
 import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
-import { Badge, Banner, Button, Card, Empty, ErrorBox, Loading, Row, Screen, T, TabBar } from '@/ui';
+import { Badge, Banner, Button, Card, Empty, ErrorBox, Loading, Row, Screen, Stepper, T, TabBar } from '@/ui';
+import { Ionicons } from '@expo/vector-icons';
 import { AccountPanel } from './account';
-import { color } from '@/theme';
+import { color, space } from '@/theme';
 import { routeTone, useFmt, Value } from '@/format';
 
 type Tab = 'home' | 'history' | 'account';
 const OPEN = ['submitted', 'scheduled', 'assigned'];
+const STEP: Record<string, number> = { submitted: 0, scheduled: 1, assigned: 2, collected: 3, delivered_to_station: 4 };
 
 export function InstitutionHome({ ctx }: { ctx: Extract<ActiveContext, { kind: 'institution' }> }) {
   const { t, lookup, time } = useI18n();
@@ -46,9 +48,17 @@ export function InstitutionHome({ ctx }: { ctx: Extract<ActiveContext, { kind: '
               <T v="heading">{t.inst.openRequest}</T>
               {requests.loading || branches.loading ? <Loading /> : <ErrorBox error={requests.error ?? branches.error} onRetry={() => { branches.reload(); requests.reload(); }} />}
               {open.map((r) => (
-                <View key={r.id} style={{ gap: 4 }}>
-                  <Row label={branches.data?.find((b) => b.id === r.branch_id)?.name ?? ''} value={<Badge tone={r.status === 'submitted' ? 'warning' : 'info'} label={lookup('reqStatus', r.status)} />} />
-                  <T v="small" muted>{time(r.created_at)}</T>
+                <View key={r.id} style={{ gap: space.sm }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+                    <View style={{ width: 46, height: 46, borderRadius: 12, backgroundColor: color.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="leaf" size={24} color={color.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <T v="heading">{lookup('reqStatus', r.status)}</T>
+                      <T v="small" muted>{branches.data?.find((b) => b.id === r.branch_id)?.name ?? ''} · {time(r.created_at)}</T>
+                    </View>
+                  </View>
+                  <Stepper current={STEP[r.status] ?? 0} steps={[{ icon: 'document-text-outline', label: lookup('reqStatus', 'submitted') }, { icon: 'git-network-outline', label: lookup('reqStatus', 'scheduled') }, { icon: 'car-outline', label: lookup('reqStatus', 'assigned') }, { icon: 'cube-outline', label: lookup('reqStatus', 'collected') }, { icon: 'business-outline', label: lookup('reqStatus', 'delivered_to_station') }]} />
                   {r.status === 'submitted' ? <Button variant="ghost" busy={cancel.busy} label={t.inst.cancelRequest} onPress={async () => { await cancel.run(() => api.cancelRequest(r.id, 'cancelled_in_app')); requests.reload(); }} /> : null}
                 </View>
               ))}
