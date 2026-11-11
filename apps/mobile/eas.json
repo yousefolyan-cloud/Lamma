@@ -15,7 +15,8 @@
     "development": {
       "extends": "base",
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
       "extends": "base",
@@ -24,11 +25,13 @@
         "buildType": "apk",
         "withoutCredentials": true,
         "gradleCommand": ":app:assembleRelease"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "extends": "base",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "production"
     }
   },
   "submit": {

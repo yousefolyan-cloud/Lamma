@@ -1,0 +1,13 @@
+name: Publish preview update (Expo Go)
+
+jobs:
+  publish_preview:
+    name: Publish update to preview branch
+    type: update
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://vpzqhjaccdtnzplsvyyl.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_GdFWolsa2kEYxzeVAOSlnA_3x-GQb7q
+      EXPO_PUBLIC_THEME: fresh
+    params:
+      branch: preview
+      message: Preview for Expo Go
