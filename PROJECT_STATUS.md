@@ -27,7 +27,7 @@ Legend: ✅ implemented and tested here · 🟡 implemented, not tested on a rea
 - App Store assets, privacy manifest review, legal drafts, cost table, CI, remaining docs (ARCHITECTURE, ROLE_PERMISSIONS, DATA_MODEL, API_SPEC, BUSINESS_RULES, SECURITY_AND_PRIVACY, OPERATIONS_RUNBOOK, APP_STORE_RELEASE_CHECKLIST).
 
 ## Decisions and assumptions
-- Visual design (owner choice 2026-11-11): palette 'fresh' from the Canva brand board (green #198751 / #2DB36E, mint #E8F6EF, amber #F2A225, white); white headers, pill buttons, logo on sign-in. Typeface under owner review (Cairo now; Tajawal / Almarai / Readex Pro offered) via `EXPO_PUBLIC_FONT`.
+- Visual design (owner choice 2026-11-11): palette 'fresh' from the Canva brand board (green #198751 / #2DB36E, mint #E8F6EF, amber #F2A225, white); white headers, pill buttons, logo on sign-in. Typeface: Tajawal (owner choice).
 - Demo numbers in `backend/dev/seed.ts` (thresholds, pay 10 + 1/stop JOD, prices, density) are fictional fixtures. Nothing is hard-coded in the product: missing policy blocks publication.
 - No approved weight tolerance → tolerance is zero and any difference goes to review.
 - Assignment rule `assignment-v1`: fewest routes in the last 30 days, then earliest application.
