@@ -1,11 +1,11 @@
 // Design tokens — لمّة.
 // Palette source: the Canva brand board "لمّة Arabic app brand board" (fresh green, deep leaf green, mint tint, white, amber).
-// Typeface: Tajawal (owner's choice 2026-11-11; open licence, bundled with the app).
+// Typeface: Almarai (open licence). Layout follows a food-delivery-app feel at the owner's request (2026-11-11): icon tab bar, solid green header, borderless shadowed cards, rounded-rect buttons.
 // EXPO_PUBLIC_THEME switches between candidate directions while the owner chooses; 'fresh' is the default.
 const palettes = {
   // A — Canva board: fresh green on white with mint surfaces and an amber accent
   fresh: {
-    bg: '#F6FBF8', surface: '#FFFFFF', surfaceAlt: '#E8F6EF', border: '#DCEBE3',
+    bg: '#F3F5F4', surface: '#FFFFFF', surfaceAlt: '#E8F6EF', border: '#E7ECEA',
     primary: '#198751', primaryDark: '#116B3F', primaryBright: '#2DB36E', primarySoft: '#E8F6EF', onPrimary: '#FFFFFF',
     accent: '#F2A225', accentSoft: '#FEF3DC',
     text: '#12261C', textMuted: '#55665D', textFaint: '#8C9A93',
@@ -35,15 +35,15 @@ export const color = {
   danger: '#C0362C', dangerSoft: '#FBE4E1', info: '#1F5F99', infoSoft: '#E2EEF9',
 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 10, md: 18, lg: 26, pill: 999 } as const;
-export const font = { regular: 'Tajawal_400Regular', medium: 'Tajawal_500Medium', bold: 'Tajawal_700Bold', black: 'Tajawal_800ExtraBold' } as const;
+export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
+export const font = { regular: 'Almarai_400Regular', medium: 'Almarai_700Bold', bold: 'Almarai_700Bold', black: 'Almarai_800ExtraBold' } as const;
 export const type = {
-  title: { fontFamily: font.black, fontSize: 26, lineHeight: 40 },
-  heading: { fontFamily: font.bold, fontSize: 18, lineHeight: 30 },
-  body: { fontFamily: font.regular, fontSize: 16, lineHeight: 28 },
-  label: { fontFamily: font.medium, fontSize: 14, lineHeight: 24 },
-  small: { fontFamily: font.regular, fontSize: 13, lineHeight: 22 },
-  number: { fontFamily: font.black, fontSize: 22, lineHeight: 34 },
+  title: { fontFamily: font.black, fontSize: 24, lineHeight: 34 },
+  heading: { fontFamily: font.bold, fontSize: 17, lineHeight: 26 },
+  body: { fontFamily: font.regular, fontSize: 15, lineHeight: 24 },
+  label: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
+  small: { fontFamily: font.regular, fontSize: 12.5, lineHeight: 20 },
+  number: { fontFamily: font.black, fontSize: 22, lineHeight: 30 },
 } as const;
 export const touch = { min: 50, driver: 60 } as const;
-export const shadow = { card: { shadowColor: '#12261C', shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 } } as const;
+export const shadow = { card: { shadowColor: '#0B1F14', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }, bar: { shadowColor: '#0B1F14', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -3 }, elevation: 8 } } as const;

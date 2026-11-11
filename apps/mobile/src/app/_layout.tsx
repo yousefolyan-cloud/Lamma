@@ -3,7 +3,7 @@ import { I18nManager, View } from 'react-native';
 import { Slot } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts, Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold } from '@expo-google-fonts/tajawal';
+import { useFonts, Almarai_400Regular, Almarai_700Bold, Almarai_800ExtraBold } from '@expo-google-fonts/almarai';
 import { I18nProvider, useI18n } from '@/i18n';
 import { SessionProvider } from '@/lib/session';
 import { color } from '@/theme';
@@ -17,13 +17,13 @@ function Direction({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold });
+  const [loaded] = useFonts({ Almarai_400Regular, Almarai_700Bold, Almarai_800ExtraBold });
   if (!loaded) return <View style={{ flex: 1, backgroundColor: color.surface }} />;
   return (
     <SafeAreaProvider>
       <I18nProvider>
         <SessionProvider>
-          <StatusBar style="dark" />
+          <StatusBar style="light" />
           <Direction><Slot /></Direction>
         </SessionProvider>
       </I18nProvider>

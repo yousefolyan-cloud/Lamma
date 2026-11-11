@@ -2,7 +2,7 @@
 // One browser context per person = one phone per person. Captures real screenshots into docs/screenshots.
 import { createRequire } from 'node:module';
 const { chromium } = createRequire(import.meta.url)('playwright'); // uses the globally installed Playwright
-const BASE = 'http://localhost:8099', PASS = process.env.DEV_PASSWORD ?? 'lamma-dev', OUT = 'docs/screenshots';
+const BASE = 'http://localhost:8099', PASS = process.env.DEV_PASSWORD ?? 'lamma-dev', OUT = process.env.OUT ?? 'docs/screenshots';
 const browser = await chromium.launch();
 const people = {};
 async function person(email) {
