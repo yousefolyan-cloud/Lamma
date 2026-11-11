@@ -5,8 +5,8 @@
 const palettes = {
   // A — Canva board: fresh green on white with mint surfaces and an amber accent
   fresh: {
-    bg: '#F3F5F4', surface: '#FFFFFF', surfaceAlt: '#E8F6EF', border: '#E7ECEA',
-    primary: '#198751', primaryDark: '#116B3F', primaryBright: '#2DB36E', primarySoft: '#E8F6EF', onPrimary: '#FFFFFF',
+    bg: '#F3F5F4', surface: '#FFFFFF', surfaceAlt: '#E3F8EC', border: '#E7ECEA',
+    primary: '#0AA654', primaryDark: '#078A45', primaryBright: '#2FD27C', primarySoft: '#E3F8EC', onPrimary: '#FFFFFF',
     accent: '#F2A225', accentSoft: '#FEF3DC',
     text: '#12261C', textMuted: '#55665D', textFaint: '#8C9A93',
   },
@@ -31,7 +31,7 @@ export const themeName: ThemeName = chosen in palettes ? chosen : 'fresh';
 
 export const color = {
   ...palettes[themeName],
-  success: '#198751', successSoft: '#E1F4EA', warning: '#9A5B00', warningSoft: '#FEF3DC',
+  success: '#0A8F49', successSoft: '#E1F4EA', warning: '#9A5B00', warningSoft: '#FEF3DC',
   danger: '#C0362C', dangerSoft: '#FBE4E1', info: '#1F5F99', infoSoft: '#E2EEF9',
 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
