@@ -184,7 +184,7 @@ const s = StyleSheet.create({
   dot: { position: 'absolute', top: -4, right: -10, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: color.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderWidth: 2, borderColor: '#fff' },
   back: { alignSelf: 'flex-start', backgroundColor: color.surface, borderRadius: radius.pill, width: 38, height: 38, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
   card: { backgroundColor: color.surface, borderRadius: radius.lg, padding: space.lg, gap: space.sm, ...shadow.card },
-  button: { borderRadius: radius.md, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
+  button: { borderRadius: radius.pill, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
   input: { backgroundColor: color.bg, borderWidth: 1.5, borderColor: color.bg, borderRadius: radius.md, paddingHorizontal: space.md, minHeight: touch.min, color: color.text },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.md, paddingVertical: 2 },
   tabbar: { flexDirection: 'row', backgroundColor: color.surface, paddingTop: space.sm, ...shadow.bar },
