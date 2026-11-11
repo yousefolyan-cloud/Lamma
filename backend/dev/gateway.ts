@@ -6,6 +6,9 @@
 // Production uses a real Supabase project; nothing in the app depends on this file.
 import http from 'node:http';
 import { Pool } from 'pg';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const env = process.env;
 if (env.LAMMA_DEV_GATEWAY !== '1' || env.NODE_ENV === 'production') throw new Error('dev gateway is disabled (set LAMMA_DEV_GATEWAY=1, never in production)');
@@ -15,6 +18,10 @@ const DEV_PASSWORD = env.DEV_PASSWORD;
 if (!DEV_PASSWORD) throw new Error('DEV_PASSWORD is required');
 const pool = new Pool({ host, port: +(env.PGPORT ?? 5432), user: env.PGUSER ?? 'postgres', password: env.PGPASSWORD, database: env.PGDATABASE ?? 'lamma_dev' });
 const ident = /^[a-z_][a-z0-9_]*$/;
+// Storage stand-in: bytes on local disk, metadata in storage.objects so the real bucket policies decide who may write and read.
+const FILES = join(tmpdir(), 'lamma-dev-storage'); mkdirSync(FILES, { recursive: true });
+const objPath = /^[A-Za-z0-9_\-./]+$/;
+const diskName = (bucket: string, name: string) => join(FILES, Buffer.from(`${bucket}/${name}`).toString('base64url'));
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const token = (sub: string) => `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 86400 })}.dev`;
 const subOf = (auth?: string) => { try { return JSON.parse(Buffer.from((auth ?? '').replace('Bearer ', '').split('.')[1] ?? '', 'base64url').toString()).sub as string; } catch { return undefined; } };
@@ -53,11 +60,35 @@ const server = http.createServer(async (req, res) => {
   const send = (code: number, body?: unknown) => { res.writeHead(code, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'access-control-expose-headers': '*' }); res.end(body === undefined ? '' : JSON.stringify(body)); };
   if (req.method === 'OPTIONS') return send(204);
   const url = new URL(req.url!, 'http://x');
-  let raw = ''; for await (const ch of req) raw += ch;
-  const body = raw ? JSON.parse(raw) : {};
+  const chunks: Buffer[] = []; for await (const ch of req) chunks.push(ch as Buffer);
+  const bytes = Buffer.concat(chunks);
   const sub = subOf(req.headers.authorization);
   try {
     const p = url.pathname;
+    const sign = /^\/storage\/v1\/object\/sign\/([a-z]+)\/(.+)$/.exec(p);
+    if (sign) {
+      const [, bucket, name] = sign as unknown as [string, string, string];
+      if (!objPath.test(name) || name.includes('..')) throw new Error('bad object name');
+      if (req.method === 'GET') { // the "signed" link: dev token only
+        if (url.searchParams.get('token') !== 'dev') return send(400, { message: 'bad token' });
+        const [meta] = (await pool.query(`select 1 from storage.objects where bucket_id = $1 and name = $2`, [bucket, name])).rows;
+        if (!meta) return send(404, { message: 'not found' });
+        res.writeHead(200, { 'content-type': /\.png$/.test(name) ? 'image/png' : /\.pdf$/.test(name) ? 'application/pdf' : 'image/jpeg', 'access-control-allow-origin': '*' });
+        return res.end(readFileSync(diskName(bucket, name)));
+      }
+      const rows = (await asUser(sub, (q) => q(`select 1 from storage.objects where bucket_id = $1 and name = $2`, [bucket, name]))).rows;
+      return rows.length ? send(200, { signedURL: `/object/sign/${bucket}/${name}?token=dev` }) : send(400, { message: 'Object not found', error: 'not_found' });
+    }
+    const up = /^\/storage\/v1\/object\/([a-z]+)\/(.+)$/.exec(p);
+    if (up && req.method === 'POST') {
+      const [, bucket, name] = up as unknown as [string, string, string];
+      if (!objPath.test(name) || name.includes('..')) throw new Error('bad object name');
+      await asUser(sub, (q) => q(`insert into storage.objects(bucket_id, name) values ($1, $2)`, [bucket, name]));
+      writeFileSync(diskName(bucket, name), bytes);
+      return send(200, { Key: `${bucket}/${name}`, Id: name });
+    }
+    const raw = bytes.toString('utf8');
+    const body = raw ? JSON.parse(raw) : {};
     if (p === '/auth/v1/token') {
       const grant = url.searchParams.get('grant_type');
       const { rows } = grant === 'password'

@@ -68,4 +68,29 @@ describe('configuration from inside the app', () => {
     }
     await expectError(db.rpc(owner, 'add_vehicle', ['pickup', '1', 1, 1]), 'not_a_driver');
   });
+  it('evidence files: a driver uploads only into their own folder; only that driver and Lamma can read; nothing can be replaced or deleted', async () => {
+    const w = await buildWorld(db, { institutions: 1 });
+    const owner = w.institutions[0]!.owner;
+    const d1 = await newUser(db, 'driver-1'); const d2 = await newUser(db, 'driver-2');
+    await db.rpc(d1, 'register_driver', [[w.area]]); await db.rpc(d2, 'register_driver', [[w.area]]);
+    const put = (u: string, name: string) => db.as(u, `insert into storage.objects(bucket_id, name) values ('evidence', $1)`, [name]);
+    const mine = `driver/${d1}/licence.jpg`;
+    await put(d1, mine);
+    await expectError(put(d2, `driver/${d1}/x.jpg`), 'row-level security');      // someone else's folder
+    await expectError(put(d1, `other/${d1}/x.jpg`), 'row-level security');       // outside the driver area
+    await expectError(put(owner, `driver/${owner}/x.jpg`), 'row-level security'); // not a driver
+    await expectError(db.as(d1, `insert into storage.objects(bucket_id, name) values ('other', $1)`, [mine]), '');
+    expect(await db.as(d1, `select name from storage.objects`)).toEqual([{ name: mine }]);
+    expect(await db.as(w.admin, `select name from storage.objects`)).toEqual([{ name: mine }]);
+    for (const u of [d2, owner, w.stationUser]) expect(await db.as(u, `select name from storage.objects`)).toHaveLength(0);
+    // append-only: no update / delete policy exists, so both touch zero rows
+    await db.as(d1, `update storage.objects set name = name || '.bak'`); await db.as(d1, `delete from storage.objects`);
+    expect(await db.admin(`select name from storage.objects`)).toEqual([{ name: mine }]);
+    // a document row can only point at the caller's own folder
+    await expectError(db.rpc(d2, 'add_driver_document', ['driving_licence', mine, null]), 'invalid_path');
+    await expectError(db.rpc(d2, 'add_driver_scale', ['S', null, 1000, 10, null, mine]), 'invalid_path');
+    await db.rpc(d1, 'add_driver_document', ['driving_licence', mine, '2030-01-01']);
+    const q = await db.rpc<{ driver_documents: { file_path: string }[] }>(w.admin, 'admin_review_queue');
+    expect(q.driver_documents.map((x) => x.file_path)).toContain(mine);
+  });
 });

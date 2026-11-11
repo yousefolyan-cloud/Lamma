@@ -5,7 +5,7 @@ import { api, type ReviewQueue } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Empty, ErrorBox, Field, Loading, Row, Screen, T, TabBar } from '@/ui';
 import { AccountPanel } from './account';
-import { AdminSettings } from './settings';
+import { AdminSettings, ViewFile } from './settings';
 import { routeTone, useFmt, Value } from '@/format';
 
 type Tab = 'ops' | 'reviews' | 'settings' | 'account';
@@ -87,10 +87,11 @@ function Reviews({ queue }: { queue: ReturnType<typeof useLoad<ReviewQueue>> }) 
   if (queue.loading) return <Loading />;
   if (queue.error || !queue.data) return <ErrorBox error={queue.error} onRetry={queue.reload} />;
   const q = queue.data;
-  const item = (entity: string, id: string, title: string, lines: [string, string][]) => (
+  const item = (entity: string, id: string, title: string, lines: [string, string][], file?: string | null) => (
     <Card key={entity + id}>
       <T v="heading">{title}</T>
       {lines.map(([k, v]) => <Row key={k} label={k} value={<Value>{v}</Value>} />)}
+      {file !== undefined ? <ViewFile path={file} /> : null}
       <Field label={t.admin.rejectReason} value={reasons[id] ?? ''} onChangeText={(v) => setReasons((p) => ({ ...p, [id]: v }))} />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1 }}><Button label={t.common.approve} busy={act.busy} onPress={async () => { await act.run(() => api.review(entity, id, 'approved', null)); queue.reload(); }} /></View>
@@ -103,8 +104,8 @@ function Reviews({ queue }: { queue: ReturnType<typeof useLoad<ReviewQueue>> }) 
     [t.admin.licenses, q.station_licenses.map((s) => item('station_license', s.id, s.name, [[t.join.licenseAuthority, s.authority ?? '—'], [t.join.licenseNumber, s.number ?? '—'], [t.admin.validUntil, s.expires_on ?? '—']]))],
     [t.admin.drivers, q.drivers.map((d) => item('driver', d.id, d.name, []))],
     [t.admin.vehicles, q.vehicles.map((v) => item('vehicle', v.id, `${v.driver} · ${v.plate}`, [[t.admin.capacity, `${fmt.kg(v.capacity_g)} · ${fmt.liters(v.capacity_l)}`]]))],
-    [t.admin.documents, q.driver_documents.map((d) => item('driver_document', d.id, `${d.driver} · ${d.kind}`, [[t.admin.validUntil, d.expires_on ?? '—']]))],
-    [t.admin.scales, q.driver_scales.map((s) => item('driver_scale', s.id, `${s.driver} · ${s.identifier}`, [[t.admin.capacity, fmt.kg(s.capacity_g)], [t.admin.precision, fmt.kg(s.precision_g)], [t.admin.validUntil, s.check_valid_until ?? '—']]))],
+    [t.admin.documents, q.driver_documents.map((d) => item('driver_document', d.id, `${d.driver} · ${d.kind}`, [[t.admin.validUntil, d.expires_on?.slice(0, 10) ?? '—']], d.file_path))],
+    [t.admin.scales, q.driver_scales.map((s) => item('driver_scale', s.id, `${s.driver} · ${s.identifier}`, [[t.admin.capacity, fmt.kg(s.capacity_g)], [t.admin.precision, fmt.kg(s.precision_g)], [t.admin.validUntil, s.check_valid_until?.slice(0, 10) ?? '—']], s.evidence_path))],
   ];
   const any = sections.some(([, items]) => items.length);
   return (

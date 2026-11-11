@@ -26,8 +26,8 @@ export interface Threshold { service_area_id: string; material_id: string; min_g
 export const POLICY_KEYS = ['base_pay_fils', 'per_stop_pay_fils', 'per_km_pay_fils', 'application_window_min', 'early_start_min', 'service_min_per_stop', 'unload_min', 'max_route_min', 'max_stops', 'plan_capacity_g', 'plan_capacity_l', 'tolerance_g', 'tolerance_bps'] as const;
 export type PolicyKey = (typeof POLICY_KEYS)[number];
 export type AreaPolicy = { service_area_id: string; auto_publish: boolean } & Record<PolicyKey, number | string | null>;
-export interface DriverDocument { id: string; kind: string; expires_on: string | null; status: string }
-export interface DriverScale { id: string; identifier: string; scale_type: string | null; capacity_g: number; precision_g: number; check_valid_until: string | null; status: string }
+export interface DriverDocument { id: string; kind: string; expires_on: string | null; status: string; file_path: string | null }
+export interface DriverScale { id: string; identifier: string; scale_type: string | null; capacity_g: number; precision_g: number; check_valid_until: string | null; status: string; check_evidence_path: string | null }
 export interface StationMaterial { station_id: string; material_id: string; accepted: boolean; conditions: string | null }
 export interface PriceVersion { id: string; station_id: string; material_id: string; price_fils_per_kg: string; valid_from: string; valid_to: string | null }
 export interface RouteCard { route_id: string; code: string; est_total_g: number; required_capacity_g: number; required_capacity_l: number | null; stops_count: number; station_name: string; starts_at: string; distance_m: number; distance_is_estimate: boolean; area_name_ar: string; area_name_en: string; expected_duration_min: number; pay_fils: string; my_application_status: string | null; my_application_reasons: string[] | null }
@@ -37,7 +37,7 @@ export interface PendingSignoff { version_id: string; version: number; data_hash
 export interface Collection { stop_id: string; branch_name: string; route_code: string; route_status: string; stop_status: string; completed_at: string | null; exception_kind: string | null; signed_net_g: number | null }
 export interface StationRoute { route_id: string; code: string; status: string; starts_at: string; expected_arrival: string; planned_estimate_g: number; driver_name: string | null; vehicle_plate: string | null; stops_collected: number; stops_exception: number; stops_open: number; signed_total_g: number; signed_by_material: { material_id: string; signed_g: number }[]; receipt: { receipt_id: string; status: string; station_net_g: number; diff_g: number } | null; case_reasons: string[] | null }
 export interface ReceiptResult { receipt_id: string; status: 'confirmed' | 'under_review'; diff_g: number; reasons?: string[]; duplicate: boolean }
-export interface ReviewQueue { organizations: { id: string; kind: string; name: string }[]; station_licenses: { id: string; name: string; authority: string | null; number: string | null; expires_on: string | null }[]; drivers: { id: string; name: string }[]; vehicles: { id: string; driver: string; type: string; plate: string; capacity_g: number; capacity_l: number }[]; driver_documents: { id: string; driver: string; kind: string; expires_on: string | null }[]; driver_scales: { id: string; driver: string; identifier: string; capacity_g: number; precision_g: number; check_valid_until: string | null }[] }
+export interface ReviewQueue { organizations: { id: string; kind: string; name: string }[]; station_licenses: { id: string; name: string; authority: string | null; number: string | null; expires_on: string | null }[]; drivers: { id: string; name: string }[]; vehicles: { id: string; driver: string; type: string; plate: string; capacity_g: number; capacity_l: number }[]; driver_documents: { id: string; driver: string; kind: string; expires_on: string | null; file_path: string | null }[]; driver_scales: { id: string; driver: string; identifier: string; capacity_g: number; precision_g: number; check_valid_until: string | null; evidence_path: string | null }[] }
 export interface Overview { routes: { route_id: string; code: string; status: string; starts_at: string; est_total_g: number; pay_fils: string; station_name: string; stops: number; applications: number; driver_name: string | null }[]; cases: { case_id: string; route_code: string; reasons: string[]; has_receipt: boolean; signed_total_g: number | null; station_net_g: number | null; diff_g: number | null }[]; requests_waiting: number; requests_need_reschedule: number; collected_signed_g: number; station_accepted_g: number }
 export interface Branch { id: string; org_id: string; name: string; address: string | null; service_area_id: string | null }
 export interface PickupRequest { id: string; branch_id: string; status: string; created_at: string }
@@ -105,10 +105,10 @@ export const api = {
   addVehicle: (v: { type: string; plate: string; capacityG: number; capacityL: number }) =>
     rpc<string>('add_vehicle', { p_type: v.type, p_plate: v.plate, p_capacity_g: v.capacityG, p_capacity_l: v.capacityL }),
   driverDocuments: () => table<DriverDocument>('driver_documents', (q) => q.order('created_at')),
-  addDriverDocument: (kind: string, expires: string | null) => rpc<string>('add_driver_document', { p_kind: kind, p_file_path: null, p_expires_on: expires }),
+  addDriverDocument: (kind: string, expires: string | null, path: string | null) => rpc<string>('add_driver_document', { p_kind: kind, p_file_path: path, p_expires_on: expires }),
   driverScales: () => table<DriverScale>('driver_scales', (q) => q.order('created_at')),
-  addDriverScale: (sc: { identifier: string; type: string | null; capacityG: number; precisionG: number; validUntil: string | null }) =>
-    rpc<string>('add_driver_scale', { p_identifier: sc.identifier, p_type: sc.type, p_capacity_g: sc.capacityG, p_precision_g: sc.precisionG, p_check_valid_until: sc.validUntil, p_evidence_path: null }),
+  addDriverScale: (sc: { identifier: string; type: string | null; capacityG: number; precisionG: number; validUntil: string | null; path: string | null }) =>
+    rpc<string>('add_driver_scale', { p_identifier: sc.identifier, p_type: sc.type, p_capacity_g: sc.capacityG, p_precision_g: sc.precisionG, p_check_valid_until: sc.validUntil, p_evidence_path: sc.path }),
   // station materials and prices
   stationMaterials: (station: string) => table<StationMaterial>('station_materials', (q) => q.eq('station_id', station)),
   setStationMaterial: (station: string, material: string, accepted: boolean, conditions: string | null) =>

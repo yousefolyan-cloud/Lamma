@@ -10,7 +10,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lamma.app",
-      "infoPlist": { "CFBundleAllowMixedLocalizations": true, "ITSAppUsesNonExemptEncryption": false }
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.lamma.app",
@@ -21,8 +24,27 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
-    "web": { "favicon": "./assets/favicon.png", "bundler": "metro", "output": "single" },
-    "plugins": ["expo-router", "expo-secure-store", "expo-localization", "expo-font"],
-    "extra": { "supportsRTL": true }
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-localization",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "تحتاج لمّة إلى الصور لإرفاق صورة الوثيقة أو فحص الميزان.",
+          "cameraPermission": "تحتاج لمّة إلى الكاميرا لتصوير الوثيقة أو فحص الميزان.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "supportsRTL": true
+    }
   }
 }

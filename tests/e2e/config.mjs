@@ -47,5 +47,18 @@ await driver.getByLabel('نوع المركبة').fill('بيك أب'); await driv
 await driver.getByLabel('الحمولة (كغ)').fill('750'); await driver.getByLabel('الحجم (لتر)').fill('2500');
 await click(driver, 'حفظ'); await see(driver, code); await see(driver, 'قيد المراجعة');
 await shot(driver, '26-driver-equipment');
+// driver: add a document with a photo → the admin can open exactly that file
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+await click(driver, 'إضافة وثيقة');
+await driver.getByLabel('نوع الوثيقة').fill('doc-' + code);
+const chooser = driver.waitForEvent('filechooser'); await click(driver, 'إرفاق صورة');
+await (await chooser).setFiles({ name: 'licence.png', mimeType: 'image/png', buffer: png });
+await see(driver, 'تم اختيار الصورة'); await click(driver, 'حفظ'); await see(driver, 'doc-' + code); await see(driver, 'عرض الصورة المرفقة');
+await shot(driver, '27-driver-document-photo');
+await admin.getByRole('tab', { name: /الاعتمادات/ }).click(); await see(admin, 'doc-' + code);
+const popup = admin.waitForEvent('popup'); await admin.getByRole('button', { name: 'عرض الصورة المرفقة' }).last().click();
+const opened = await popup; await opened.waitForLoadState();
+if (!/\/storage\/v1\/object\/sign\/evidence\/driver\//.test(opened.url())) throw new Error('unexpected file url ' + opened.url());
+await admin.getByRole('button', { name: 'عرض الصورة المرفقة' }).last().scrollIntoViewIfNeeded(); await shot(admin, '28-admin-review-document-photo');
 await browser.close();
 console.log('CONFIG E2E OK');

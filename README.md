@@ -20,7 +20,7 @@ Requires Node 22 and PostgreSQL 16 with PostGIS on localhost (user `postgres`).
 ```bash
 npm install
 export PGPASSWORD=postgres
-npm test                                   # 25 tests: 9 domain + 16 database
+npm test                                   # 26 tests: 9 domain + 17 database
 npx tsx backend/dev/seed.ts                # fictional demo data in database lamma_dev
 LAMMA_DEV_GATEWAY=1 DEV_PASSWORD=lamma-dev npx tsx backend/dev/gateway.ts &
 cd apps/mobile && cp .env.example .env.local   # set URL http://localhost:54321, any anon key

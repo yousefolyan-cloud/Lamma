@@ -1,18 +1,41 @@
 // Configuration screens. Nothing here ships with default figures: every threshold, pay rate, tolerance and price
 // is typed in by the responsible person and stored by an audited server function.
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { formatThousandths, parseThousandths } from '@lamma/domain';
 import { useI18n } from '@/i18n';
 import { api, POLICY_KEYS, type Area, type Material, type PolicyKey } from '@/lib/api';
 import { useAction, useLoad } from '@/lib/useLoad';
 import { Badge, Banner, Button, Card, Choice, Empty, ErrorBox, Field, Loading, Row, T, type Tone } from '@/ui';
 import { useFmt, Value } from '@/format';
+import { evidenceUrl, pickImage, uploadEvidence, type PickedFile } from '@/lib/files';
 
 const statusTone = (s: string): Tone => (s === 'approved' ? 'success' : s === 'rejected' ? 'danger' : 'warning');
 const isDate = (s: string) => s === '' || /^\d{4}-\d{2}-\d{2}$/.test(s);
 const int = (s: string): number | null => (/^\d+$/.test(s.trim()) ? Number(s.trim()) : null);
 const num = { keyboardType: 'decimal-pad' as const };
+
+/** Opens a stored evidence file through a short-lived link. */
+export function ViewFile({ path }: { path: string | null | undefined }) {
+  const { t } = useI18n();
+  const act = useAction();
+  if (!path) return <T v="small" muted>{t.cfg.noFile}</T>;
+  return (
+    <>
+      <ErrorBox error={act.error} />
+      <Button variant="ghost" label={t.cfg.viewFile} busy={act.busy} onPress={() => act.run(async () => { await Linking.openURL(await evidenceUrl(path)); })} />
+    </>
+  );
+}
+function AttachFile({ file, onPick }: { file: PickedFile | null; onPick: (f: PickedFile | null) => void }) {
+  const { t } = useI18n();
+  return (
+    <>
+      {file ? <Banner tone="success" text={t.cfg.fileChosen} /> : null}
+      <Button variant="secondary" label={file ? t.cfg.changeFile : t.cfg.attachFile} onPress={async () => { const f = await pickImage().catch(() => null); if (f) onPick(f); }} />
+    </>
+  );
+}
 
 // ======================= Lamma operations =======================
 type Section = 'areas' | 'materials' | 'rules' | 'documents';
@@ -287,6 +310,8 @@ export function DriverEquipment() {
   const [v, setV] = useState({ type: '', plate: '', kg: '', liters: '' });
   const [doc, setDoc] = useState({ kind: '', expires: '' });
   const [sc, setSc] = useState({ identifier: '', type: '', kg: '', precision: '', until: '' });
+  const [docFile, setDocFile] = useState<PickedFile | null>(null);
+  const [scFile, setScFile] = useState<PickedFile | null>(null);
   if (data.loading) return <Loading />;
   if (data.error || !data.data) return <ErrorBox error={data.error} onRetry={data.reload} />;
   const d = data.data;
@@ -325,6 +350,7 @@ export function DriverEquipment() {
           <Row label={t.admin.capacity} value={<Value>{fmt.kg(x.capacity_g)}</Value>} />
           <Row label={t.admin.precision} value={<Value>{fmt.kg(x.precision_g)}</Value>} />
           <Row label={t.admin.validUntil} value={<Value>{x.check_valid_until?.slice(0, 10) ?? '—'}</Value>} />
+          <ViewFile path={x.check_evidence_path} />
         </Card>
       ))}
       {form === 'scale' ? (
@@ -334,9 +360,11 @@ export function DriverEquipment() {
           <Field label={t.cfg.capacityKg} value={sc.kg} {...num} onChangeText={(x) => setSc({ ...sc, kg: x })} />
           <Field label={t.cfg.precisionKg} value={sc.precision} {...num} onChangeText={(x) => setSc({ ...sc, precision: x })} />
           <Field label={t.cfg.checkUntil} value={sc.until} placeholder="YYYY-MM-DD" onChangeText={(x) => setSc({ ...sc, until: x })} />
+          <T v="small" muted>{t.cfg.scaleProofHint}</T>
+          <AttachFile file={scFile} onPick={setScFile} />
           <ErrorBox error={act.error} />
           <Button label={t.common.save} busy={act.busy} disabled={!sc.identifier.trim() || !sKg || !sPrec || !isDate(sc.until.trim())}
-            onPress={async () => { if (await act.run(() => api.addDriverScale({ identifier: sc.identifier.trim(), type: sc.type.trim() || null, capacityG: sKg!, precisionG: sPrec!, validUntil: sc.until.trim() || null }))) { setSc({ identifier: '', type: '', kg: '', precision: '', until: '' }); done(); } }} />
+            onPress={async () => { if (await act.run(async () => api.addDriverScale({ identifier: sc.identifier.trim(), type: sc.type.trim() || null, capacityG: sKg!, precisionG: sPrec!, validUntil: sc.until.trim() || null, path: scFile ? await uploadEvidence(scFile) : null }))) { setScFile(null); setSc({ identifier: '', type: '', kg: '', precision: '', until: '' }); done(); } }} />
           <Button variant="ghost" label={t.common.cancel} onPress={() => setForm(null)} />
         </Card>
       ) : <Button variant="secondary" label={t.cfg.addScale} onPress={() => open('scale')} />}
@@ -347,6 +375,7 @@ export function DriverEquipment() {
         <Card key={x.id}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><T v="heading">{x.kind}</T><Badge tone={statusTone(x.status)} label={t.cfg.status[x.status as 'pending'] ?? x.status} /></View>
           <Row label={t.admin.validUntil} value={<Value>{x.expires_on?.slice(0, 10) ?? '—'}</Value>} />
+          <ViewFile path={x.file_path} />
         </Card>
       ))}
       {form === 'document' ? (
@@ -354,10 +383,10 @@ export function DriverEquipment() {
           {d.required.length ? <Choice value={doc.kind || null} onChange={(k) => setDoc({ ...doc, kind: k })} options={d.required.map((r) => ({ value: r.kind, label: r.kind }))} /> : null}
           <Field label={t.cfg.documentKind} value={doc.kind} onChangeText={(x) => setDoc({ ...doc, kind: x })} />
           <Field label={t.cfg.expires} value={doc.expires} placeholder="YYYY-MM-DD" onChangeText={(x) => setDoc({ ...doc, expires: x })} />
-          <T v="small" muted>{t.cfg.uploadLater}</T>
+          <AttachFile file={docFile} onPick={setDocFile} />
           <ErrorBox error={act.error} />
-          <Button label={t.common.save} busy={act.busy} disabled={!doc.kind.trim() || !isDate(doc.expires.trim())}
-            onPress={async () => { if (await act.run(() => api.addDriverDocument(doc.kind.trim(), doc.expires.trim() || null))) { setDoc({ kind: '', expires: '' }); done(); } }} />
+          <Button label={t.common.save} busy={act.busy} disabled={!doc.kind.trim() || !isDate(doc.expires.trim()) || !docFile}
+            onPress={async () => { if (await act.run(async () => api.addDriverDocument(doc.kind.trim(), doc.expires.trim() || null, docFile ? await uploadEvidence(docFile) : null))) { setDocFile(null); setDoc({ kind: '', expires: '' }); done(); } }} />
           <Button variant="ghost" label={t.common.cancel} onPress={() => setForm(null)} />
         </Card>
       ) : <Button variant="secondary" label={t.cfg.addMyDocument} onPress={() => open('document')} />}
